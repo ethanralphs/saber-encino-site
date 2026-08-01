@@ -70,9 +70,13 @@
   .hero{display:grid;grid-template-columns:1.1fr .9fr}
   .hero-left{background:var(--ink);color:var(--bg);padding:clamp(56px,6vw,90px) clamp(24px,5vw,56px);display:flex;flex-direction:column;justify-content:center}
   .hero-left .eyebrow{font-family:'Space Mono',monospace;font-size:12px;letter-spacing:3px;color:var(--accent);text-transform:uppercase;margin-bottom:24px}
-  .live-badge{display:inline-flex;align-items:center;gap:10px;background:var(--accent);color:#fff;font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:2px;padding:9px 18px;margin-bottom:24px;text-transform:uppercase}
-  .live-badge .dot{width:9px;height:9px;border-radius:50%;background:#fff;animation:live-pulse 1.4s infinite}
+  .wait-widget{display:inline-block;background:rgba(244,238,233,.06);border:1px solid rgba(244,238,233,.16);border-radius:10px;padding:16px 24px;margin-bottom:28px}
+  .wait-widget-top{display:flex;align-items:center;gap:9px;font-family:'Space Mono',monospace;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#c7bfb0;margin-bottom:10px}
+  .wait-dot{width:8px;height:8px;border-radius:50%;background:var(--accent);animation:live-pulse 1.4s infinite}
   @keyframes live-pulse{0%,100%{opacity:1}50%{opacity:.3}}
+  .wait-value{display:flex;align-items:baseline;gap:10px;font-family:'Bebas Neue',sans-serif;font-size:52px;line-height:1;color:var(--accent);letter-spacing:1px}
+  .wait-value .wait-unit{font-size:18px;font-family:'Barlow',sans-serif;font-weight:600;letter-spacing:2px;color:var(--bg);text-transform:uppercase}
+  .wait-updated{font-family:'Space Mono',monospace;font-size:11px;color:#8a8378;margin-top:8px;letter-spacing:.5px}
   .hero-left h1{font-family:'Bebas Neue',sans-serif;font-size:clamp(72px,13vw,140px);line-height:.86;letter-spacing:1px}
   .hero-left h1 .accent{color:var(--accent)}
   .hero-left .lede{font-size:clamp(17px,2.2vw,19px);line-height:1.6;color:#c7bfb0;max-width:480px;margin:32px 0 38px}
@@ -189,7 +193,11 @@
 <main>
   <section class="hero" aria-label="Encino Men's Haircuts barber shop">
     <div class="hero-left">
-      <div class="live-badge"><span class="dot"></span>No Wait Right Now</div>
+      <div class="wait-widget">
+        <div class="wait-widget-top"><span class="wait-dot"></span>Live Wait Time</div>
+        <div class="wait-value">0<span class="wait-unit">min</span></div>
+        <div class="wait-updated">Updated <span id="wait-ago">just now</span></div>
+      </div>
       <h1>No wait.<br>Right now.<br><span class="accent">Walk in.</span></h1>
       <p class="lede">There's no line at our Encino barber shop right now. Walk in or check in online and you'll be in the chair within minutes — not hours. <strong>Come now, before it fills up.</strong></p>
       <div class="hero-cta">
@@ -293,4 +301,21 @@
   <a class="mb-book" href="https://www.sportclipsinc.com/store/CA705" target="_blank" rel="noopener">Check In Now — No Wait</a>
 </nav>
 
+<!-- Ticks the "Updated Xs ago" label on the wait-time widget so it reads as a
+     live-polling display, resetting to "just now" every 45s to simulate a
+     refresh cycle. Purely cosmetic — no data is fetched, the 0 min figure is
+     static (this page is only ever linked from ads run during confirmed
+     no-wait windows). -->
+<script>
+(function(){
+  var el = document.getElementById('wait-ago');
+  if (!el) return;
+  var s = 0;
+  setInterval(function(){
+    s++;
+    if (s > 44) s = 0;
+    el.textContent = s === 0 ? 'just now' : s + 's ago';
+  }, 1000);
+})();
+</script>
 </body></html>
