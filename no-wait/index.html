@@ -182,14 +182,22 @@
        the header just needs the brand mark on mobile — drop the page links
        and the duplicate Check In Online button. */
     .nav-right{display:none}
-    /* Shorter, wide rectangle instead of the near-square crop min-height:380px
-       (from the 900px breakpoint) produced on phone-width screens. */
-    .hero-right{min-height:220px}
-    /* Live-wait widget: one horizontal row instead of three stacked rows. */
-    .wait-widget{display:flex;align-items:center;gap:14px;padding:12px 16px;flex-wrap:wrap}
-    .wait-widget-top{margin-bottom:0}
-    .wait-value{font-size:34px}
-    .wait-updated{margin-top:0}
+    /* Shorter, wide rectangle instead of the near-square crop that a taller
+       min-height produces on phone-width screens. */
+    .hero-right{min-height:170px}
+    /* Badge shrinks to roughly a third of its desktop size and tucks tightly
+       into the corner so it stops covering the subject's face on the much
+       shorter mobile crop above. */
+    .hero-badge{width:40px;height:40px;top:10px;left:10px;font-size:14px}
+    .hero-badge small{font-size:7px}
+    /* Live-wait widget: 2-column grid — label on the left (spanning both
+       rows), the number and its "Updated Xs ago" timestamp stacked directly
+       on top of each other on the right with no row gap between them, and
+       tighter overall padding so the whole box is shorter. */
+    .wait-widget{display:grid;grid-template-columns:auto 1fr;grid-template-rows:auto auto;column-gap:14px;row-gap:0;align-items:center;padding:10px 16px}
+    .wait-widget-top{grid-column:1;grid-row:1/3;margin-bottom:0}
+    .wait-value{grid-column:2;grid-row:1;font-size:40px}
+    .wait-updated{grid-column:2;grid-row:2;margin-top:0}
   }
 </style>
 </head>
