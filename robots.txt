@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://www.encinomenshaircuts.com/sitemap.xml
+Sitemap: https://encinomenshaircuts.com/sitemap.xml
