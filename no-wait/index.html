@@ -183,20 +183,24 @@
        and the duplicate Check In Online button. */
     .nav-right{display:none}
     /* Shorter, wide rectangle instead of the near-square crop that a taller
-       min-height produces on phone-width screens. */
+       min-height produces on phone-width screens. Shifted ~18px "higher"
+       within the source photo (object-position) per feedback. */
     .hero-right{min-height:170px}
-    /* Badge: top-left corner pinned (top/left unchanged), grown to cover more
-       of the shop's circular logo graphic baked into the photo. */
-    .hero-badge{width:80px;height:80px;top:10px;left:10px;font-size:20px}
-    .hero-badge small{font-size:9px}
-    /* Live-wait widget, redesigned as a clean left-aligned vertical stack
-       (label, then the number, then its timestamp tucked tight underneath)
-       with a left accent stripe for a bit of visual anchor — simpler and
-       less busy than the previous 2-column layout. */
-    .wait-widget{padding:14px 20px 16px;border-left:3px solid var(--accent)}
+    .hero-right img{object-position:center calc(50% - 18px)}
+    /* Badge: size AND corner (top/left) unchanged — only the text grows to
+       fill more of the circle. */
+    .hero-badge{width:80px;height:80px;top:10px;left:10px;font-size:30px}
+    .hero-badge small{font-size:12px}
+    /* Live-wait widget: clean left-aligned vertical stack, no accent border
+       (removed per feedback — read as an unwanted stripe). */
+    .wait-widget{padding:14px 20px 16px}
     .wait-widget-top{margin-bottom:8px}
     .wait-value{font-size:38px}
     .wait-updated{margin-top:2px}
+    /* Equalize the two gaps: image-bottom -> widget-top (hero-left's own top
+       padding, previously the clamp()'d 56px) now matches widget-bottom ->
+       headline-top (wait-widget's 28px margin-bottom) at 28px each. */
+    .hero-left{padding-top:28px}
   }
 </style>
 </head>
