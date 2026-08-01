@@ -121,12 +121,10 @@
   .offer-fine{font-size:10.5px;color:var(--muted);line-height:1.6;margin-top:14px}
 
   /* MARQUEE */
-  .marquee{background:var(--accent);color:#fff;font-family:'Bebas Neue',sans-serif;font-size:clamp(16px,2vw,22px);letter-spacing:4px;padding:14px 24px;display:flex;gap:22px;justify-content:center;flex-wrap:nowrap;overflow:hidden;white-space:nowrap}
-  .marquee-track{display:contents}
-  .marquee-track.dup{display:none}
-  @media(max-width:1024px){ .marquee .s-walk{display:none} }
-  @media(max-width:860px){ .marquee .s-neck{display:none} }
-  @media(max-width:680px){ .marquee .s-towel{display:none} }
+  .marquee{background:var(--accent);color:#fff;font-family:'Bebas Neue',sans-serif;font-size:clamp(16px,2vw,22px);letter-spacing:4px;padding:14px 24px;display:flex;gap:22px;justify-content:flex-start;flex-wrap:nowrap;overflow:hidden;white-space:nowrap}
+  .marquee-track{display:flex;gap:22px;flex-shrink:0;animation:marquee-scroll 18s linear infinite}
+  .marquee-track.dup{display:flex}
+  @keyframes marquee-scroll{from{transform:translateX(0)}to{transform:translateX(-100%)}}
 
   /* WHAT YOU GET */
   .svc-head{text-align:center;margin-bottom:48px}
@@ -193,15 +191,7 @@
   .mobile-bar a{flex:1;display:flex;align-items:center;justify-content:center;gap:8px;padding:15px 8px;font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:2px}
   .mobile-bar .mb-call{flex:0 0 auto;border:1px solid #4a453d;color:var(--bg);min-width:56px}
   .mobile-bar .mb-book{background:var(--accent);color:#fff}
-  @media(max-width:720px){    /* Marquee: genuinely infinite left-to-right scroll instead of
-       progressively hiding items (which was clipping content on narrow
-       phones). Both track copies animate in lockstep for a seamless loop. */
-    .marquee{justify-content:flex-start}
-    .marquee-track{display:flex;gap:22px;flex-shrink:0;animation:marquee-scroll 18s linear infinite}
-    .marquee-track.dup{display:flex}
-    @keyframes marquee-scroll{from{transform:translateX(0)}to{transform:translateX(-100%)}}
-    .marquee .s-walk,.marquee .s-neck,.marquee .s-towel,.marquee .s-kids{display:inline}
- body{padding-bottom:70px} .mobile-bar{display:flex} }
+  @media(max-width:720px){ body{padding-bottom:70px} .mobile-bar{display:flex} }
 </style>
 </head>
 <body id="top">
@@ -249,8 +239,8 @@
   </section>
 
   <div class="marquee" aria-hidden="true">
-    <div class="marquee-track"><span>Free MVP Upgrade</span><span>&#9679;</span><span>No Purchase Necessary</span><span class="s-towel">&#9679;</span><span class="s-towel">New Clients Only</span><span class="s-neck">&#9679;</span><span class="s-neck">Walk-In or Check In</span><span class="s-walk">&#9679;</span><span class="s-walk">Text Opt-Out Anytime</span></div>
-    <div class="marquee-track dup"><span>Free MVP Upgrade</span><span>&#9679;</span><span>No Purchase Necessary</span><span class="s-towel">&#9679;</span><span class="s-towel">New Clients Only</span><span class="s-neck">&#9679;</span><span class="s-neck">Walk-In or Check In</span><span class="s-walk">&#9679;</span><span class="s-walk">Text Opt-Out Anytime</span></div>
+    <div class="marquee-track"><span>Free MVP Upgrade</span><span>&#9679;</span><span>No Purchase Necessary</span><span>&#9679;</span><span>New Clients Only</span><span>&#9679;</span><span>Walk-In or Check In</span><span>&#9679;</span><span>Text Opt-Out Anytime</span></div>
+    <div class="marquee-track dup"><span>Free MVP Upgrade</span><span>&#9679;</span><span>No Purchase Necessary</span><span>&#9679;</span><span>New Clients Only</span><span>&#9679;</span><span>Walk-In or Check In</span><span>&#9679;</span><span>Text Opt-Out Anytime</span></div>
   </div>
 
   <section class="pad" aria-label="What you get">

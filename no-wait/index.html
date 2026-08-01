@@ -89,13 +89,10 @@
   .hero-badge{position:absolute;top:40px;left:40px;background:var(--accent);color:var(--ink);font-family:'Bebas Neue',sans-serif;font-size:44px;letter-spacing:1px;width:118px;height:118px;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:.85}
   .hero-badge small{font-size:16px;font-family:'Barlow',sans-serif;font-weight:600;letter-spacing:1px}
   .hero-right>span{font-family:'Space Mono',monospace;font-size:11px;letter-spacing:3px;color:#a79f8f}
-  .marquee{background:var(--accent);color:#fff;font-family:'Bebas Neue',sans-serif;font-size:clamp(16px,2vw,22px);letter-spacing:4px;padding:14px 24px;display:flex;gap:22px;justify-content:center;flex-wrap:nowrap;overflow:hidden;white-space:nowrap}
-  .marquee-track{display:contents}
-  .marquee-track.dup{display:none}
-  @media(max-width:1024px){ .marquee .s-walk{display:none} }
-  @media(max-width:860px){ .marquee .s-neck{display:none} }
-  @media(max-width:680px){ .marquee .s-towel{display:none} }
-  @media(max-width:520px){ .marquee .s-kids{display:none} }
+  .marquee{background:var(--accent);color:#fff;font-family:'Bebas Neue',sans-serif;font-size:clamp(16px,2vw,22px);letter-spacing:4px;padding:14px 24px;display:flex;gap:22px;justify-content:flex-start;flex-wrap:nowrap;overflow:hidden;white-space:nowrap}
+  .marquee-track{display:flex;gap:22px;flex-shrink:0;animation:marquee-scroll 18s linear infinite}
+  .marquee-track.dup{display:flex}
+  @keyframes marquee-scroll{from{transform:translateX(0)}to{transform:translateX(-100%)}}
   .svc-head{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;margin-bottom:48px;flex-wrap:wrap}
   .svc-head h2{font-family:'Bebas Neue',sans-serif;font-size:clamp(52px,9vw,88px);letter-spacing:1px;line-height:.9}
   .svc-head p{font-size:15px;color:var(--muted);max-width:320px;text-align:right}
@@ -179,14 +176,6 @@
   .mobile-bar .mb-call{flex:0 0 auto;border:1px solid #4a453d;color:var(--bg);min-width:56px}
   .mobile-bar .mb-book{background:var(--accent);color:var(--ink)}
   @media(max-width:720px){
-    /* Marquee: genuinely infinite left-to-right scroll instead of
-       progressively hiding items (which was clipping content on narrow
-       phones). Both track copies animate in lockstep for a seamless loop. */
-    .marquee{justify-content:flex-start}
-    .marquee-track{display:flex;gap:22px;flex-shrink:0;animation:marquee-scroll 18s linear infinite}
-    .marquee-track.dup{display:flex}
-    @keyframes marquee-scroll{from{transform:translateX(0)}to{transform:translateX(-100%)}}
-    .marquee .s-walk,.marquee .s-neck,.marquee .s-towel,.marquee .s-kids{display:inline}
     body{padding-bottom:70px}
     .mobile-bar{display:flex}
     /* The sticky bar below already surfaces Call + Check In at all times, so
@@ -249,8 +238,8 @@
   </section>
 
   <div class="marquee" aria-hidden="true">
-    <div class="marquee-track"><span>No Wait Right Now</span><span>●</span><span>Men's Cuts</span><span>●</span><span>Beard Trims</span><span class="s-kids">●</span><span class="s-kids">Kids</span><span class="s-towel">●</span><span class="s-towel">Hot Towel</span><span class="s-neck">●</span><span class="s-neck">30-Day Free Trim</span></div>
-    <div class="marquee-track dup"><span>No Wait Right Now</span><span>●</span><span>Men's Cuts</span><span>●</span><span>Beard Trims</span><span class="s-kids">●</span><span class="s-kids">Kids</span><span class="s-towel">●</span><span class="s-towel">Hot Towel</span><span class="s-neck">●</span><span class="s-neck">30-Day Free Trim</span></div>
+    <div class="marquee-track"><span>No Wait Right Now</span><span>●</span><span>Men's Cuts</span><span>●</span><span>Beard Trims</span><span>●</span><span>Kids</span><span>●</span><span>Senior Cuts</span><span>●</span><span>Hot Towel</span><span>●</span><span>MVP Experience</span><span>●</span><span>30-Day Free Trim</span></div>
+    <div class="marquee-track dup"><span>No Wait Right Now</span><span>●</span><span>Men's Cuts</span><span>●</span><span>Beard Trims</span><span>●</span><span>Kids</span><span>●</span><span>Senior Cuts</span><span>●</span><span>Hot Towel</span><span>●</span><span>MVP Experience</span><span>●</span><span>30-Day Free Trim</span></div>
   </div>
 
   <section id="services" class="pad">
