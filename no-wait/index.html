@@ -175,7 +175,22 @@
   .mobile-bar a{flex:1;display:flex;align-items:center;justify-content:center;gap:8px;padding:15px 8px;font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:2px}
   .mobile-bar .mb-call{flex:0 0 auto;border:1px solid #4a453d;color:var(--bg);min-width:56px}
   .mobile-bar .mb-book{background:var(--accent);color:var(--ink)}
-  @media(max-width:720px){ body{padding-bottom:70px} .mobile-bar{display:flex} }
+  @media(max-width:720px){
+    body{padding-bottom:70px}
+    .mobile-bar{display:flex}
+    /* The sticky bar below already surfaces Call + Check In at all times, so
+       the header just needs the brand mark on mobile — drop the page links
+       and the duplicate Check In Online button. */
+    .nav-right{display:none}
+    /* Shorter, wide rectangle instead of the near-square crop min-height:380px
+       (from the 900px breakpoint) produced on phone-width screens. */
+    .hero-right{min-height:220px}
+    /* Live-wait widget: one horizontal row instead of three stacked rows. */
+    .wait-widget{display:flex;align-items:center;gap:14px;padding:12px 16px;flex-wrap:wrap}
+    .wait-widget-top{margin-bottom:0}
+    .wait-value{font-size:34px}
+    .wait-updated{margin-top:0}
+  }
 </style>
 </head>
 <body id="top">
@@ -195,7 +210,7 @@
     <div class="hero-left">
       <div class="wait-widget">
         <div class="wait-widget-top"><span class="wait-dot"></span>Live Wait Time</div>
-        <div class="wait-value">0<span class="wait-unit">min</span></div>
+        <div class="wait-value"><span id="wait-min">0</span><span class="wait-unit">min</span></div>
         <div class="wait-updated">Updated <span id="wait-ago">just now</span></div>
       </div>
       <h1>No wait.<br>Right now.<br><span class="accent">Walk in.</span></h1>
@@ -301,20 +316,42 @@
   <a class="mb-book" href="https://www.sportclipsinc.com/store/CA705" target="_blank" rel="noopener">Check In Now — No Wait</a>
 </nav>
 
-<!-- Ticks the "Updated Xs ago" label on the wait-time widget so it reads as a
-     live-polling display, resetting to "just now" every 45s to simulate a
-     refresh cycle. Purely cosmetic — no data is fetched, the 0 min figure is
-     static (this page is only ever linked from ads run during confirmed
-     no-wait windows). -->
+<!-- Live wait-time widget: polls the same Apps Script proxy the dashboard uses
+     (action=getWait, public/read-only) for this store's current wait, as
+     published every ~5 min by sportclips_no_wait_ad.py (action=saveWait).
+     Falls back to the static "0" already in the markup if the fetch fails or
+     the reading is stale — never shows a broken/blank state. -->
 <script>
 (function(){
-  var el = document.getElementById('wait-ago');
-  if (!el) return;
-  var s = 0;
+  var PROXY_URL = 'https://script.google.com/macros/s/AKfycbzLa5RTwbnYuJtTFNnkj5gcA546jUIyBy3ArcLnPiQpZC8zEUbS7c4tZuiuasp6a93t/exec';
+  var STORE_CODE = 'CA705';
+  var STALE_MS = 20 * 60 * 1000;   // ignore a reading older than 20 min (~4x the publish cadence)
+  var POLL_MS = 2 * 60 * 1000;     // re-poll every 2 minutes
+
+  var valEl = document.getElementById('wait-min');
+  var agoEl = document.getElementById('wait-ago');
+  var lastFetchMs = Date.now();
+
+  function poll(){
+    fetch(PROXY_URL + '?action=getWait', { cache: 'no-store' })
+      .then(function(r){ return r.json(); })
+      .then(function(data){
+        var row = data && data[STORE_CODE];
+        if (!row || typeof row.minutes !== 'number') return;
+        var updatedMs = row.updated ? new Date(row.updated).getTime() : NaN;
+        if (!isNaN(updatedMs) && (Date.now() - updatedMs) > STALE_MS) return;
+        if (valEl) valEl.textContent = row.minutes;
+        lastFetchMs = Date.now();
+      })
+      .catch(function(){ /* keep showing the last known value */ });
+  }
+
+  poll();
+  setInterval(poll, POLL_MS);
   setInterval(function(){
-    s++;
-    if (s > 44) s = 0;
-    el.textContent = s === 0 ? 'just now' : s + 's ago';
+    if (!agoEl) return;
+    var s = Math.round((Date.now() - lastFetchMs) / 1000);
+    agoEl.textContent = s <= 0 ? 'just now' : s + 's ago';
   }, 1000);
 })();
 </script>
