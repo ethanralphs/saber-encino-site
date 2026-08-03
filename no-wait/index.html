@@ -171,13 +171,12 @@
     .visit iframe{min-height:340px}
   }
   /* STICKY MOBILE CHECK-IN BAR */
-  .mobile-bar{display:none;position:fixed;bottom:0;left:0;right:0;z-index:100;background:var(--ink);padding:10px 12px;gap:10px;box-shadow:0 -8px 24px rgba(0,0,0,.35)}
+  .mobile-bar{display:flex;position:fixed;bottom:0;left:0;right:0;z-index:100;background:var(--ink);padding:10px 12px;gap:10px;box-shadow:0 -8px 24px rgba(0,0,0,.35)}
+  body{padding-bottom:70px}
   .mobile-bar a{flex:1;display:flex;align-items:center;justify-content:center;gap:8px;padding:15px 8px;font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:2px}
   .mobile-bar .mb-call{flex:0 0 auto;border:1px solid #4a453d;color:var(--bg);min-width:56px}
   .mobile-bar .mb-book{background:var(--accent);color:var(--ink)}
   @media(max-width:720px){
-    body{padding-bottom:70px}
-    .mobile-bar{display:flex}
     /* The sticky bar below already surfaces Call + Check In at all times, so
        the header just needs the brand mark on mobile — drop the page links
        and the duplicate Check In Online button. */
