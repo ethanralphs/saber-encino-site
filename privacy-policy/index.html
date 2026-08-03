@@ -42,12 +42,15 @@
   a{text-decoration:none;color:inherit}
   img{max-width:100%;display:block}
   .pad{padding:clamp(56px,7vw,96px) clamp(24px,5vw,56px)}
-  header.nav{display:flex;align-items:center;justify-content:space-between;padding:22px clamp(24px,5vw,56px);background:var(--ink);color:var(--bg);gap:16px;flex-wrap:wrap}
+  header.nav{display:flex;align-items:center;justify-content:space-between;padding:22px clamp(24px,5vw,56px);background:var(--ink);color:var(--bg);gap:16px;flex-wrap:wrap;position:relative}
   .brand{font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:3px}
   .nav-right{display:flex;align-items:center;gap:clamp(16px,2.5vw,32px);font-weight:600;font-size:13px;letter-spacing:1.5px;text-transform:uppercase;color:#b3ab9c}
   .nav-right a.link:hover{color:var(--accent)}
   .nav-cta{background:var(--accent);color:#fff;padding:11px 20px;letter-spacing:1.5px;transition:background .2s}
   .nav-cta:hover{background:var(--bg);color:var(--ink)}
+  .nav-toggle-input{display:none}
+  .nav-toggle{display:none;flex-direction:column;justify-content:center;gap:5px;width:26px;height:20px;cursor:pointer}
+  .nav-toggle span{display:block;width:100%;height:2px;background:var(--bg)}
   .btn-primary{display:inline-block;background:var(--accent);color:#fff;padding:18px 32px;font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:2px;transition:background .2s}
   .btn-primary:hover{background:var(--bg);color:var(--ink)}
 
@@ -105,12 +108,21 @@
   .mobile-bar a{flex:1;display:flex;align-items:center;justify-content:center;gap:8px;padding:15px 8px;font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:2px}
   .mobile-bar .mb-call{flex:0 0 auto;border:1px solid #4a453d;color:var(--bg);min-width:56px}
   .mobile-bar .mb-book{background:var(--accent);color:#fff}
-  @media(max-width:720px){ .nav-right{display:none} }
+  @media(max-width:720px){
+    .brand{font-size:21px}
+    .nav-toggle{display:flex}
+    .nav-right{display:none;position:absolute;top:100%;left:0;right:0;flex-direction:column;align-items:stretch;gap:0;background:var(--ink);padding:8px clamp(24px,5vw,56px) 20px;box-shadow:0 12px 24px rgba(0,0,0,.35);z-index:99}
+    .nav-right a.link{width:100%;padding:14px 0;border-bottom:1px solid rgba(244,238,233,.12)}
+    .nav-right a.nav-cta{margin-top:14px;text-align:center}
+    .nav-toggle-input:checked ~ .nav-right{display:flex}
+  }
 </style>
 </head>
 <body>
 <header class="nav">
   <a href="/" class="brand">Encino Men's Haircuts</a>
+  <input type="checkbox" id="nav-toggle" class="nav-toggle-input">
+  <label for="nav-toggle" class="nav-toggle" aria-label="Menu"><span></span><span></span><span></span></label>
   <nav class="nav-right" aria-label="Primary">
     <a href="/mens-haircuts/" class="link">Services</a>
     <a href="/about/" class="link">About</a>
