@@ -8,6 +8,48 @@
   gtag('js', new Date());
   gtag('config', 'G-1D5RZ44FNK');
 </script>
+<!-- GA4 custom events: phone_tap (any tel: link) + book_click (any sportclipsinc.com/store/
+     link). Delegated listener so it covers every occurrence on the page automatically, including
+     icon-only buttons. preventDefault + gtag event_callback navigates once the hit is confirmed
+     sent, with a 500ms fallback timeout in case the callback never fires (ad blockers, slow
+     network) -- so the click never feels broken, worst case a half-second delay. -->
+<script>
+(function(){
+  var STORE_CODE = 'CA705';
+
+  function navigate(a){
+    if (a.target === '_blank') { window.open(a.href, '_blank', 'noopener'); }
+    else { window.location.href = a.href; }
+  }
+
+  function trackAndGo(a, eventName, params){
+    var done = false;
+    function go(){ if (done) return; done = true; navigate(a); }
+    params.event_callback = go;
+    if (typeof gtag === 'function') {
+      gtag('event', eventName, params);
+    } else {
+      go();
+      return;
+    }
+    setTimeout(go, 500);
+  }
+
+  document.addEventListener('click', function(e){
+    var a = e.target.closest && e.target.closest('a[href]');
+    if (!a) return;
+    var href = a.href;
+    if (href.indexOf('tel:') === 0) {
+      e.preventDefault();
+      trackAndGo(a, 'phone_tap', { store: STORE_CODE, link_url: href });
+    } else if (href.indexOf('sportclipsinc.com/store/') !== -1) {
+      e.preventDefault();
+      var m = href.match(/\/store\/([A-Za-z0-9]+)/);
+      trackAndGo(a, 'book_click', { store: m ? m[1] : STORE_CODE, link_url: href });
+    }
+  });
+})();
+</script>
 
 <meta charset="utf-8">
 <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
