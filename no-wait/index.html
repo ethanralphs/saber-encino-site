@@ -73,13 +73,19 @@
   .hero{display:grid;grid-template-columns:1.1fr .9fr}
   .hero-left{background:var(--ink);color:var(--bg);padding:clamp(56px,6vw,90px) clamp(24px,5vw,56px);display:flex;flex-direction:column;justify-content:center}
   .hero-left .eyebrow{font-family:'Space Mono',monospace;font-size:12px;letter-spacing:3px;color:var(--accent);text-transform:uppercase;margin-bottom:24px}
-  .wait-widget{display:inline-block;background:rgba(244,238,233,.06);border:1px solid rgba(244,238,233,.16);border-radius:10px;padding:16px 24px;margin-bottom:28px}
+  .wait-widget{display:inline-flex;align-items:center;gap:22px;background:rgba(244,238,233,.06);border:1px solid rgba(244,238,233,.16);border-radius:10px;padding:16px 24px;margin-bottom:28px}
   .wait-widget-top{display:flex;align-items:center;gap:9px;font-family:'Space Mono',monospace;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#c7bfb0;margin-bottom:10px}
-  .wait-dot{width:8px;height:8px;border-radius:50%;background:var(--accent);animation:live-pulse 1.4s infinite}
+  .wait-dot{width:8px;height:8px;border-radius:50%;background:var(--accent);animation:live-pulse 1.4s infinite;transition:opacity .3s}
   @keyframes live-pulse{0%,100%{opacity:1}50%{opacity:.3}}
   .wait-value{display:flex;align-items:baseline;gap:10px;font-family:'Bebas Neue',sans-serif;font-size:52px;line-height:1;color:var(--accent);letter-spacing:1px}
   .wait-value .wait-unit{font-size:18px;font-family:'Barlow',sans-serif;font-weight:600;letter-spacing:2px;color:var(--bg);text-transform:uppercase}
   .wait-updated{font-family:'Space Mono',monospace;font-size:11px;color:#8a8378;margin-top:8px;letter-spacing:.5px}
+  .wait-refresh-btn{flex:0 0 auto;display:flex;align-items:center;justify-content:center;width:38px;height:38px;background:transparent;border:1px solid rgba(244,238,233,.24);border-radius:50%;color:var(--bg);cursor:pointer;transition:background .2s,border-color .2s}
+  .wait-refresh-btn:hover{background:rgba(244,238,233,.12);border-color:rgba(244,238,233,.4)}
+  .wait-refresh-btn:active{transform:scale(.94)}
+  .wait-refresh-btn svg{transition:transform .5s ease}
+  .wait-refresh-btn.spinning svg{transform:rotate(360deg)}
+  @media(max-width:720px){.wait-refresh-btn{display:none}}
   .hero-left h1{font-family:'Bebas Neue',sans-serif;font-size:clamp(72px,13vw,140px);line-height:.86;letter-spacing:1px}
   .hero-left h1 .accent{color:var(--accent)}
   .hero-left .lede{font-size:clamp(17px,2.2vw,19px);line-height:1.6;color:#c7bfb0;max-width:480px;margin:32px 0 38px}
@@ -229,9 +235,14 @@
   <section class="hero" aria-label="Encino Men's Haircuts barber shop">
     <div class="hero-left">
       <div class="wait-widget">
-        <div class="wait-widget-top"><span class="wait-dot"></span>Live Wait Time</div>
-        <div class="wait-value"><span id="wait-min">0</span><span class="wait-unit">min</span></div>
-        <div class="wait-updated">Updated <span id="wait-ago">just now</span></div>
+        <div class="wait-widget-body">
+          <div class="wait-widget-top"><span class="wait-dot" id="wait-dot"></span><span id="wait-label">Live Wait Time</span></div>
+          <div class="wait-value"><span id="wait-min">0</span><span class="wait-unit">min</span></div>
+          <div class="wait-updated">Updated <span id="wait-ago">just now</span></div>
+        </div>
+        <button type="button" class="wait-refresh-btn" id="wait-refresh" aria-label="Refresh wait time" title="Refresh wait time">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+        </button>
       </div>
       <h1>No wait.<br>Right now.<br><span class="accent">Walk in.</span></h1>
       <p class="lede">There's no line at our Encino barber shop right now. Walk in or check in online and you'll be in the chair within minutes — not hours. <strong>Come now, before it fills up.</strong></p>
@@ -337,43 +348,68 @@
   <a class="mb-book" href="https://www.sportclipsinc.com/store/CA705" target="_blank" rel="noopener">Check In Now — No Wait</a>
 </nav>
 
-<!-- Live wait-time widget: polls the same Apps Script proxy the dashboard uses
-     (action=getWait, public/read-only) for this store's current wait, as
-     published every ~5 min by sportclips_no_wait_ad.py (action=saveWait).
-     Falls back to the static "0" already in the markup if the fetch fails or
-     the reading is stale — never shows a broken/blank state. -->
+<!-- Live wait-time widget: polls the same Apps Script proxy sportclips_no_wait_ad.py
+     publishes to every ~5 min (action=saveWait) via action=getWait (public/read-only).
+     NOTE: this must be the deployment's current /exec URL — Apps Script does NOT
+     push code edits to an already-live URL until you explicitly redeploy that
+     specific deployment, so a stale URL here silently stops returning real data
+     (returns {"error":"Unknown action"}) without ever throwing a visible error.
+     Freshness is judged from the reading's own "updated" timestamp (not from when
+     we happened to fetch it), so a stalled publish pipeline shows an honest
+     "unavailable" state instead of freezing on a wrong number forever. Manual
+     refresh button re-polls immediately without a full page reload. -->
 <script>
 (function(){
   var PROXY_URL = 'https://script.google.com/macros/s/AKfycbwNpDo4MaUIYC-hFbCLr6T_uscgy-VWXQebPaaS4KroWBgT0wRAOzHdIHyrgXqWGIe0gw/exec';
   var STORE_CODE = 'CA705';
-  var STALE_MS = 20 * 60 * 1000;   // ignore a reading older than 20 min (~4x the publish cadence)
-  var POLL_MS = 2 * 60 * 1000;     // re-poll every 2 minutes
+  var STALE_MS = 10 * 60 * 1000;   // unavailable after ~2 missed 5-min publish cycles
+  var POLL_MS = 2 * 60 * 1000;     // auto re-poll every 2 minutes
 
-  var valEl = document.getElementById('wait-min');
-  var agoEl = document.getElementById('wait-ago');
-  var lastFetchMs = Date.now();
+  var valEl   = document.getElementById('wait-min');
+  var agoEl   = document.getElementById('wait-ago');
+  var dotEl   = document.getElementById('wait-dot');
+  var labelEl = document.getElementById('wait-label');
+  var btnEl   = document.getElementById('wait-refresh');
+  var lastUpdatedMs = null;   // timestamp the reading itself claims, not when we fetched it
+  var lastMinutes   = null;
 
   function poll(){
-    fetch(PROXY_URL + '?action=getWait', { cache: 'no-store' })
+    if (btnEl) btnEl.classList.add('spinning');
+    return fetch(PROXY_URL + '?action=getWait', { cache: 'no-store' })
       .then(function(r){ return r.json(); })
       .then(function(data){
         var row = data && data[STORE_CODE];
         if (!row || typeof row.minutes !== 'number') return;
         var updatedMs = row.updated ? new Date(row.updated).getTime() : NaN;
-        if (!isNaN(updatedMs) && (Date.now() - updatedMs) > STALE_MS) return;
-        if (valEl) valEl.textContent = row.minutes;
-        lastFetchMs = Date.now();
+        if (isNaN(updatedMs)) return;
+        lastUpdatedMs = updatedMs;
+        lastMinutes = row.minutes;
       })
-      .catch(function(){ /* keep showing the last known value */ });
+      .catch(function(){ /* keep showing the last known value */ })
+      .then(function(){ if (btnEl) setTimeout(function(){ btnEl.classList.remove('spinning'); }, 400); });
+  }
+
+  function tick(){
+    if (!agoEl || lastUpdatedMs === null) return;
+    var ageMs = Date.now() - lastUpdatedMs;
+    var stale = ageMs > STALE_MS;
+    if (dotEl) dotEl.style.opacity = stale ? '0.25' : '';
+    if (dotEl) dotEl.style.animation = stale ? 'none' : '';
+    if (labelEl) labelEl.textContent = stale ? 'Wait Time' : 'Live Wait Time';
+    if (stale) {
+      if (valEl) valEl.textContent = '--';
+      agoEl.textContent = 'unavailable right now — call the shop';
+      return;
+    }
+    if (valEl) valEl.textContent = lastMinutes;
+    var s = Math.round(ageMs / 1000);
+    agoEl.textContent = s <= 5 ? 'just now' : s + 's ago';
   }
 
   poll();
   setInterval(poll, POLL_MS);
-  setInterval(function(){
-    if (!agoEl) return;
-    var s = Math.round((Date.now() - lastFetchMs) / 1000);
-    agoEl.textContent = s <= 0 ? 'just now' : s + 's ago';
-  }, 1000);
+  setInterval(tick, 1000);
+  if (btnEl) btnEl.addEventListener('click', poll);
 })();
 </script>
 </body></html>
