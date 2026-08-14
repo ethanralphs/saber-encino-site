@@ -139,6 +139,7 @@ src="https://www.facebook.com/tr?id=637429294491011&ev=PageView&noscript=1"
   .wait-value{display:flex;align-items:baseline;gap:10px;font-family:'Bebas Neue',sans-serif;font-size:52px;line-height:1;color:var(--accent);letter-spacing:1px}
   .wait-value .wait-unit{font-size:18px;font-family:'Barlow',sans-serif;font-weight:600;letter-spacing:2px;color:var(--bg);text-transform:uppercase}
   .wait-updated{font-family:'Space Mono',monospace;font-size:11px;color:#8a8378;margin-top:8px;letter-spacing:.5px}
+  .wait-closed-msg{font-family:'Barlow',sans-serif;font-weight:600;font-size:17px;line-height:1.5;color:var(--bg);max-width:340px}
   .wait-refresh-btn{flex:0 0 auto;display:flex;align-items:center;justify-content:center;width:38px;height:38px;background:transparent;border:1px solid rgba(244,238,233,.24);border-radius:50%;color:var(--bg);cursor:pointer;transition:background .2s,border-color .2s}
   .wait-refresh-btn:hover{background:rgba(244,238,233,.12);border-color:rgba(244,238,233,.4)}
   .wait-refresh-btn:active{transform:scale(.94)}
@@ -294,7 +295,7 @@ src="https://www.facebook.com/tr?id=637429294491011&ev=PageView&noscript=1"
   <section class="hero" aria-label="Encino Men's Haircuts barber shop">
     <div class="hero-left">
       <div class="wait-widget">
-        <div class="wait-widget-body">
+        <div class="wait-widget-body" id="wait-widget-body">
           <div class="wait-widget-top"><span class="wait-dot" id="wait-dot"></span><span id="wait-label">Live Wait Time</span></div>
           <div class="wait-value"><span id="wait-min">0</span><span class="wait-unit">min</span></div>
           <div class="wait-updated">Updated <span id="wait-ago">just now</span></div>
@@ -416,13 +417,32 @@ src="https://www.facebook.com/tr?id=637429294491011&ev=PageView&noscript=1"
      Freshness is judged from the reading's own "updated" timestamp (not from when
      we happened to fetch it), so a stalled publish pipeline shows an honest
      "unavailable" state instead of freezing on a wrong number forever. Manual
-     refresh button re-polls immediately without a full page reload. -->
+     refresh button re-polls immediately without a full page reload.
+
+     Before any of that: if the shop is currently closed (per the hours below,
+     evaluated in the store's own timezone so an out-of-town visitor or a stale
+     device clock can't misjudge it), the widget never starts polling at all —
+     it swaps straight to a "closed for the day, back tomorrow at X" message.
+     This is a one-time check at page load, not a live clock; the ad only ever
+     points here during hours anyway. -->
 <script>
 (function(){
   var PROXY_URL = 'https://script.google.com/macros/s/AKfycbwNpDo4MaUIYC-hFbCLr6T_uscgy-VWXQebPaaS4KroWBgT0wRAOzHdIHyrgXqWGIe0gw/exec';
   var STORE_CODE = 'CA705';
   var STALE_MS = 10 * 60 * 1000;   // unavailable after ~2 missed 5-min publish cycles
   var POLL_MS = 2 * 60 * 1000;     // auto re-poll every 2 minutes
+  var STORE_TZ = 'America/Los_Angeles';
+  // Sun=0..Sat=6, minutes-from-midnight open/close, matching the hours table
+  // and JSON-LD schema on the main site — keep these in sync if hours change.
+  var HOURS = [
+    { open: 600, close: 1080, label: '10:00 AM – 6:00 PM' }, // Sun
+    { open: 600, close: 1140, label: '10:00 AM – 7:00 PM' }, // Mon
+    { open: 600, close: 1140, label: '10:00 AM – 7:00 PM' }, // Tue
+    { open: 600, close: 1140, label: '10:00 AM – 7:00 PM' }, // Wed
+    { open: 600, close: 1140, label: '10:00 AM – 7:00 PM' }, // Thu
+    { open: 600, close: 1140, label: '10:00 AM – 7:00 PM' }, // Fri
+    { open: 540, close: 1080, label: '9:00 AM – 6:00 PM' }   // Sat
+  ];
 
   var valEl   = document.getElementById('wait-min');
   var agoEl   = document.getElementById('wait-ago');
@@ -431,6 +451,45 @@ src="https://www.facebook.com/tr?id=637429294491011&ev=PageView&noscript=1"
   var btnEl   = document.getElementById('wait-refresh');
   var lastUpdatedMs = null;   // timestamp the reading itself claims, not when we fetched it
   var lastMinutes   = null;
+
+  function nowInStoreTZ(){
+    var parts = new Intl.DateTimeFormat('en-US', {
+      timeZone: STORE_TZ, weekday: 'short', hour: '2-digit', minute: '2-digit', hour12: false
+    }).formatToParts(new Date());
+    var map = {};
+    parts.forEach(function(p){ map[p.type] = p.value; });
+    var dayMap = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
+    return {
+      day: dayMap[map.weekday],
+      minutes: (parseInt(map.hour, 10) % 24) * 60 + parseInt(map.minute, 10)
+    };
+  }
+
+  function storeStatus(){
+    var now = nowInStoreTZ();
+    var today = HOURS[now.day];
+    if (now.minutes >= today.open && now.minutes < today.close) return { open: true };
+    // Before today's open (e.g. an early-morning page load) is a different
+    // message than after today's close — "closed for the day, back tomorrow"
+    // would be wrong if the shop is still opening later today.
+    if (now.minutes < today.open) return { open: false, opensLaterToday: true, label: today.label };
+    return { open: false, opensLaterToday: false, label: HOURS[(now.day + 1) % 7].label };
+  }
+
+  function showClosed(status){
+    if (dotEl) { dotEl.style.animation = 'none'; dotEl.style.opacity = '.35'; }
+    if (labelEl) labelEl.textContent = "We're Closed";
+    var valueEl = document.querySelector('#wait-widget-body .wait-value');
+    var updatedEl = document.querySelector('#wait-widget-body .wait-updated');
+    var msg = document.createElement('div');
+    msg.className = 'wait-closed-msg';
+    msg.textContent = status.opensLaterToday
+      ? "We haven't opened yet today — we're open from " + status.label + "."
+      : "Sorry, we're closed for the day. Tomorrow we're open from " + status.label + ".";
+    if (valueEl) valueEl.replaceWith(msg);
+    if (updatedEl) updatedEl.remove();
+    if (btnEl) btnEl.style.display = 'none';
+  }
 
   function poll(){
     if (btnEl) btnEl.classList.add('spinning');
@@ -465,10 +524,15 @@ src="https://www.facebook.com/tr?id=637429294491011&ev=PageView&noscript=1"
     agoEl.textContent = s <= 5 ? 'just now' : s + 's ago';
   }
 
-  poll();
-  setInterval(poll, POLL_MS);
-  setInterval(tick, 1000);
-  if (btnEl) btnEl.addEventListener('click', poll);
+  var status = storeStatus();
+  if (!status.open) {
+    showClosed(status);
+  } else {
+    poll();
+    setInterval(poll, POLL_MS);
+    setInterval(tick, 1000);
+    if (btnEl) btnEl.addEventListener('click', poll);
+  }
 })();
 </script>
 </body></html>
