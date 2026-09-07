@@ -25,11 +25,61 @@ fbq('track', 'PageView');
 src="https://www.facebook.com/tr?id=637429294491011&ev=PageView&noscript=1"
 /></noscript>
 <!-- End Meta Pixel Code -->
+<!-- UTM capture: reads utm_source/utm_medium/utm_campaign off the landing URL (e.g. the
+     Google LSA and Meta ad tracking links) and caches them in sessionStorage so they're
+     still available if the click happens later in the same tab session, or if the visitor
+     lands here again without the params still on the URL (internal nav, a refresh, etc).
+     window.scUTM is always all three keys, defaulting missing ones to "(not set)" -- the
+     CheckInClick handler below reads this directly and never has to guard for undefined. -->
+<script>
+(function(){
+  var UTM_KEYS = ['utm_source', 'utm_medium', 'utm_campaign'];
+  var STORAGE_KEY = 'sc_utm_params';
+
+  function readFromQuery(){
+    var params = new URLSearchParams(window.location.search);
+    var found = {}, any = false;
+    UTM_KEYS.forEach(function(k){
+      var v = params.get(k);
+      if (v) { found[k] = v; any = true; }
+    });
+    return any ? found : null;
+  }
+
+  function readFromStorage(){
+    try {
+      var raw = sessionStorage.getItem(STORAGE_KEY);
+      return raw ? JSON.parse(raw) : null;
+    } catch (e) { return null; }
+  }
+
+  var fromQuery = readFromQuery();
+  if (fromQuery) {
+    try { sessionStorage.setItem(STORAGE_KEY, JSON.stringify(fromQuery)); } catch (e) {}
+  }
+  var captured = fromQuery || readFromStorage() || {};
+
+  window.scUTM = {
+    utm_source:   captured.utm_source   || '(not set)',
+    utm_medium:   captured.utm_medium   || '(not set)',
+    utm_campaign: captured.utm_campaign || '(not set)'
+  };
+})();
+</script>
+
 <!-- GA4 custom events: phone_tap (any tel: link) + book_click (any sportclipsinc.com/store/
      link). Delegated listener so it covers every occurrence on the page automatically, including
      icon-only buttons. preventDefault + gtag event_callback navigates once the hit is confirmed
      sent, with a 500ms fallback timeout in case the callback never fires (ad blockers, slow
-     network) -- so the click never feels broken, worst case a half-second delay. -->
+     network) -- so the click never feels broken, worst case a half-second delay.
+
+     CheckInClick (Meta Pixel trackCustom + a parallel GA4 event) fires alongside book_click
+     on every check-in link on the page, carrying the UTM params captured above so LSA vs.
+     Meta-ad vs. organic traffic is distinguishable in both Events Manager and GA4. Fired
+     fire-and-forget, NOT gated behind the book_click event_callback/timeout -- every one of
+     these links opens the booking URL in a new tab (target="_blank"), so this tab never
+     unloads and there's no risk of the beacon getting cut off. Navigation timing is
+     untouched: trackAndGo's own callback/timeout still solely controls when window.open() fires. -->
 <script>
 (function(){
   var STORE_CODE = 'CA705';
@@ -62,7 +112,25 @@ src="https://www.facebook.com/tr?id=637429294491011&ev=PageView&noscript=1"
     } else if (href.indexOf('sportclipsinc.com/store/') !== -1) {
       e.preventDefault();
       var m = href.match(/\/store\/([A-Za-z0-9]+)/);
-      trackAndGo(a, 'book_click', { store: m ? m[1] : STORE_CODE, link_url: href });
+      var storeCode = m ? m[1] : STORE_CODE;
+      var utm = window.scUTM || { utm_source: '(not set)', utm_medium: '(not set)', utm_campaign: '(not set)' };
+      if (typeof fbq === 'function') {
+        fbq('trackCustom', 'CheckInClick', {
+          store: storeCode,
+          utm_source: utm.utm_source,
+          utm_medium: utm.utm_medium,
+          utm_campaign: utm.utm_campaign
+        });
+      }
+      if (typeof gtag === 'function') {
+        gtag('event', 'CheckInClick', {
+          store: storeCode,
+          utm_source: utm.utm_source,
+          utm_medium: utm.utm_medium,
+          utm_campaign: utm.utm_campaign
+        });
+      }
+      trackAndGo(a, 'book_click', { store: storeCode, link_url: href });
     }
   });
 })();
